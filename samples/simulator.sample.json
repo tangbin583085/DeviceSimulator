@@ -1,0 +1,105 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 9000
+  },
+  "protocol": {
+    "name": "DemoBinaryProtocol",
+    "version": 1
+  },
+  "limits": {
+    "maxPayloadLength": 4096,
+    "maxBufferedBytes": 8192,
+    "maxDelayMs": 30000,
+    "maxFragmentCount": 64,
+    "maxNoiseLength": 256,
+    "maxCoalesceCount": 64
+  },
+  "simulation": {
+    "randomSeed": 20260804
+  },
+  "rules": [
+    {
+      "requestCommand": "0x01",
+      "behavior": "Respond",
+      "response": {
+        "command": "0x81",
+        "payloadHex": "01 02 03"
+      },
+      "faults": {
+        "delayMs": 100
+      }
+    },
+    {
+      "requestCommand": "0x02",
+      "behavior": "NoResponse"
+    },
+    {
+      "requestCommand": "0x03",
+      "behavior": "Respond",
+      "response": {
+        "command": "0x83",
+        "payloadHex": "10 20"
+      },
+      "faults": {
+        "corruptChecksum": true
+      }
+    },
+    {
+      "requestCommand": "0x04",
+      "behavior": "Respond",
+      "response": {
+        "command": "0x84",
+        "payloadHex": "11 22 33 44"
+      },
+      "faults": {
+        "fragmentSizes": [3, 2],
+        "fragmentDelayMs": 20
+      }
+    },
+    {
+      "requestCommand": "0x06",
+      "behavior": "Respond",
+      "response": {
+        "command": "0x86",
+        "payloadHex": "55 66"
+      },
+      "faults": {
+        "noisePrefixHex": "DE AD",
+        "invalidLengthAdjustment": 1
+      }
+    },
+    {
+      "requestCommand": "0x05",
+      "behavior": "Respond",
+      "response": {
+        "command": "0x85",
+        "payloadHex": "00"
+      },
+      "faults": {
+        "disconnectAfterSend": true
+      }
+    },
+    {
+      "requestCommand": "0x08",
+      "behavior": "Respond",
+      "response": {
+        "command": "0x88",
+        "payloadHex": "01"
+      },
+      "faults": {
+        "coalesceCount": 2,
+        "coalesceWindowMs": 50
+      }
+    }
+  ],
+  "telemetry": {
+    "enabled": true,
+    "intervalMs": 1000,
+    "command": "0x90",
+    "payloadHex": "00 FA 0C E4"
+  },
+  "logging": {
+    "minimumLevel": "Information"
+  }
+}
