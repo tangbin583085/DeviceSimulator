@@ -73,7 +73,9 @@ DemoBinaryProtocolCodec::DemoBinaryProtocolCodec(DemoBinaryProtocolOptions optio
     if (!m_options.isValid(&error)) {
         throw std::invalid_argument(error.toStdString());
     }
-    m_buffer.reserve(std::min<qsizetype>(m_options.maxBufferedBytes, 64));
+    const qsizetype expectedFrameSize =
+        m_options.maxPayloadLength + FixedFrameOverhead;
+    m_buffer.reserve(std::min(m_options.maxBufferedBytes, expectedFrameSize));
 }
 
 QString DemoBinaryProtocolCodec::name() const
