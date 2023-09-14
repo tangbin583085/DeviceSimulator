@@ -92,6 +92,16 @@ private slots:
                      .response->command,
             quint8(0x81));
     }
+
+    void resetClearsBufferedInput()
+    {
+        DemoBinaryProtocolCodec codec;
+        codec.append(QByteArrayView(QByteArray::fromHex("AA550101")));
+        QVERIFY(codec.bufferedByteCount() > 0);
+
+        codec.reset();
+        QCOMPARE(codec.bufferedByteCount(), qsizetype(0));
+    }
 };
 
 QTEST_APPLESS_MAIN(ProtocolTests)
