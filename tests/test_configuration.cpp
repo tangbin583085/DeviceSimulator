@@ -100,6 +100,18 @@ private slots:
                 return item.path == QStringLiteral("$.server.port");
             }));
     }
+
+    void hexValuesAcceptPrefixesAndSpaces()
+    {
+        quint8 command = 0;
+        QByteArray payload;
+
+        QVERIFY(ConfigurationValues::parseHexByte(QStringLiteral("0x8A"), &command));
+        QCOMPARE(command, quint8(0x8A));
+        QVERIFY(ConfigurationValues::parseHexBytes(
+            QStringLiteral("01 0A FF"), &payload));
+        QCOMPARE(payload, QByteArray::fromHex("010AFF"));
+    }
 };
 
 QTEST_APPLESS_MAIN(ConfigurationTests)
