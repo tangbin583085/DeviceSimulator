@@ -160,6 +160,18 @@ private slots:
         server->stop();
         QVERIFY(!server->isRunning());
     }
+
+    void startEmitsTheActualDynamicPort()
+    {
+        auto server = createServer();
+        QSignalSpy started(server.get(), &DeviceSimulatorServer::serverStarted);
+        QString error;
+
+        QVERIFY2(server->start(&error), qPrintable(error));
+        QTRY_COMPARE_WITH_TIMEOUT(started.count(), 1, 1000);
+        QCOMPARE(started.at(0).at(1).toUInt(), server->serverPort());
+        QVERIFY(server->serverPort() != 0);
+    }
 };
 
 QTEST_MAIN(ServerTests)
