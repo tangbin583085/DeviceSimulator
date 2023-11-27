@@ -193,6 +193,17 @@ private slots:
             client.state() == QAbstractSocket::UnconnectedState,
             3000);
     }
+
+    void fragmentationAndCoalescingCannotBeCombined()
+    {
+        FaultInjectionOptions faults;
+        faults.fragmentSizes = {2, 3};
+        faults.coalesceCount = 2;
+        QString error;
+
+        QVERIFY(!faults.isValid(&error));
+        QVERIFY(error.contains(QStringLiteral("cannot be combined")));
+    }
 };
 
 QTEST_MAIN(BehaviorTests)
