@@ -428,6 +428,9 @@ void DeviceSimulatorServer::releaseClient()
     m_clientPeer.clear();
     m_fragmentOffset = 0;
     m_fragmentIndex = 0;
+    m_telemetrySequence = m_telemetryOptions.has_value()
+        ? m_telemetryOptions->initialSequence
+        : 1;
     m_processingRequest = false;
     m_writing = false;
     m_coalesceWindowExpired = false;
