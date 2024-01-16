@@ -5,6 +5,11 @@ function(add_devicesimulator_test target source)
             DeviceSimulator::Core
             Qt6::Test
     )
+    target_compile_definitions(${target}
+        PRIVATE
+            QT_NO_CAST_FROM_ASCII
+            QT_NO_CAST_TO_ASCII
+    )
     add_test(NAME ${target} COMMAND ${target})
 endfunction()
 
