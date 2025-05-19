@@ -1,21 +1,118 @@
 # DeviceSimulator
 
-DeviceSimulator 是一个用 Qt 和 C++ 写的 TCP 设备模拟器，主要用于联调和自动化测试。
+DeviceSimulator 是一个用 Qt 6 和 C++20 编写的轻量 TCP 设备模拟器，主要给上位机开发、二进制协议调试、自动化测试和设备联调使用。
 
-项目会模拟一个简单的二进制协议，可以配置设备收到不同命令后的响应，也可以模拟延迟、
-丢包、分片和断开连接等情况。
+项目是纯命令行程序，只依赖 `Qt Core`、`Qt Network` 和 `Qt Test`，不使用 Widgets 或 QML。当前版本保持单客户端设计，不打算扩展成设备管理平台。
 
-当前项目还在持续开发中，具体功能以源码和样例配置为准。
+## 目录
+
+- `src/core`：协议、规则、TCP Server、故障注入、Telemetry 和 JSON 配置。
+- `src/cli`：命令行入口和内置样例配置。
+- `tests`：协议、配置、TCP、故障和 Telemetry 测试。
+- `samples`：可直接使用的 JSON 配置。
+- `docs`：协议、配置、架构、测试和发布说明。
 
 ## 构建
 
-需要 Qt 6、CMake 3.21 以上版本，以及支持 C++20 的编译器。
+需要 Qt 6.2 或更高版本、CMake 3.21 或更高版本，以及支持 C++20 的编译器。
 
 ```shell
 cmake -S . -B build
 cmake --build build
+ctest --test-dir build --output-on-failure
 ```
+
+生成的命令行程序通常位于：
+
+```text
+build/src/cli/device-simulator
+```
+
+## 使用
+
+先检查样例配置：
+
+```shell
+./build/src/cli/device-simulator validate \
+  --config samples/simulator.sample.json
+```
+
+启动模拟器：
+
+```shell
+./build/src/cli/device-simulator run \
+  --config samples/simulator.sample.json
+```
+
+其他命令：
+
+```shell
+./build/src/cli/device-simulator sample-config
+./build/src/cli/device-simulator version
+./build/src/cli/device-simulator help
+```
+
+Ctrl+C 会停止监听并关闭当前连接。命令成功返回 `0`，参数错误返回 `1`，文件、配置或启动错误返回 `2`。
+
+## 主要功能
+
+- `AA 55` Demo 二进制协议和 CRC16-Modbus。
+- 连续字节流解析，支持半包、粘包和错误数据恢复。
+- 同一时间只服务一个客户端，断开后继续等待下一次连接。
+- 按命令字匹配响应，未知命令返回 `0xFF` 和 `01 <原命令字>`。
+- 延迟、无响应、丢弃、CRC 破坏、长度修改、前置噪声、分片、合并和发送后断线。
+- 固定随机种子，概率故障可以重复。
+- 每个连接独立的周期 Telemetry，重连后序列号重新开始。
+- 严格 JSON 配置，拒绝未知字段、错误类型、非法 Hex、注释和尾随逗号。
+
+普通响应和 Telemetry 共用一个有界发送队列。分片发送时不会穿插其他帧；合并发送只收集兼容的相邻输出。
+
+## 配置
+
+完整配置见 [samples/simulator.sample.json](samples/simulator.sample.json)。顶层字段包括：
+
+- `server`：监听 IP 和端口。
+- `protocol`：协议名称和版本。
+- `limits`：Payload、缓存、延迟、分片、噪声和合并上限。
+- `simulation`：概率故障使用的固定随机种子。
+- `rules`：请求命令、响应和故障参数。
+- `telemetry`：周期上报设置。
+- `logging`：CLI 最低日志等级。
+
+CLI 配置端口必须在 `1..65535`。代码方式可以把端口设为 `0`，让操作系统自动分配端口，主要用于测试。
+
+字段说明见 [docs/configuration.md](docs/configuration.md)，故障处理顺序见 [docs/fault-injection.md](docs/fault-injection.md)。
+
+## Demo 协议
+
+| Offset | Size | Field |
+| ---: | ---: | --- |
+| 0 | 2 | Header `AA 55` |
+| 2 | 1 | Version |
+| 3 | 1 | Command |
+| 4 | 2 | Sequence，大端 UInt16 |
+| 6 | 2 | Payload length，大端 UInt16 |
+| 8 | N | Payload |
+| 8 + N | 2 | CRC16-Modbus，低字节在前 |
+
+CRC 从 Version 开始计算到 Payload 最后一个字节，不包含 Header 和 CRC 自身。详细说明见 [docs/sample-protocol.md](docs/sample-protocol.md)。
+
+## 测试
+
+测试使用 Qt Test，TCP 集成测试只连接 loopback，并使用动态端口，不需要真实设备或公网。
+
+```shell
+ctest --test-dir build --output-on-failure
+```
+
+GitHub Actions 会执行 Release 构建和全部测试。
+
+## 安全提醒
+
+默认只监听 `127.0.0.1`。配置成 `0.0.0.0` 后，同一网络里的其他机器也可能连接，只建议在可信网络中使用。
+
+JSON 只描述数据，不执行脚本、外部命令或动态加载代码。不要把真实公司的私有协议、密钥、生产地址或客户数据提交到仓库。
 
 ## License
 
-MIT License，详见 [LICENSE](LICENSE)。
+Copyright `tangbin`，MIT License。见 [LICENSE](LICENSE)。
