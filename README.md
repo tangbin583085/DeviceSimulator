@@ -1,5 +1,7 @@
 # DeviceSimulator
 
+## 中文说明
+
 DeviceSimulator 是一个用 Qt 6 和 C++20 编写的轻量 TCP 设备模拟器，主要给上位机开发、二进制协议调试、自动化测试和设备联调使用。
 
 项目是纯命令行程序，只依赖 `Qt Core`、`Qt Network` 和 `Qt Test`，不使用 Widgets 或 QML。当前版本保持单客户端设计，不打算扩展成设备管理平台。
@@ -116,3 +118,104 @@ JSON 只描述数据，不执行脚本、外部命令或动态加载代码。不
 ## License
 
 Copyright `tangbin`，MIT License。见 [LICENSE](LICENSE)。
+
+---
+
+## English
+
+DeviceSimulator is a small TCP device simulator written with Qt 6 and C++20.
+It is mainly used while developing desktop tools, testing a binary protocol,
+or running integration tests without a real device.
+
+The project is command-line only. It uses Qt Core, Qt Network, and Qt Test.
+The current server accepts one client at a time. When that client disconnects,
+the server goes back to listening for the next connection.
+
+### Project layout
+
+- `src/core`: protocol codec, rules, TCP server, faults, telemetry, and configuration.
+- `src/cli`: command-line program and embedded sample configuration.
+- `tests`: protocol, configuration, TCP, and behavior tests.
+- `samples`: example JSON configuration.
+- `docs`: notes about the protocol, configuration, and testing.
+
+### Build
+
+You need Qt 6.2 or newer, CMake 3.21 or newer, and a compiler with C++20 support.
+
+```shell
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+The executable is usually created at:
+
+```text
+build/src/cli/device-simulator
+```
+
+### Run
+
+Check the sample configuration first:
+
+```shell
+./build/src/cli/device-simulator validate \
+  --config samples/simulator.sample.json
+```
+
+Start the simulator:
+
+```shell
+./build/src/cli/device-simulator run \
+  --config samples/simulator.sample.json
+```
+
+The CLI also provides `sample-config`, `version`, and `help` commands. Press
+Ctrl+C to stop the server.
+
+### Main features
+
+- A small `AA 55` binary demo protocol with CRC16-Modbus.
+- Stream parsing for partial frames, combined frames, and invalid input.
+- Responses selected by command rules.
+- Delay, dropped responses, bad CRC, invalid length, noise, fragmentation,
+  coalescing, and disconnect-after-send behavior.
+- Repeatable random faults with a fixed seed.
+- Periodic telemetry for each client connection.
+- JSON configuration with type and range checks.
+
+The demo protocol is only included so the project can be run and tested. It is
+not based on a real device. A different protocol can be added by implementing
+the codec interface.
+
+### Configuration
+
+See [samples/simulator.sample.json](samples/simulator.sample.json) for a complete
+example. It contains the listen address, protocol settings, limits, response
+rules, fault options, telemetry, and logging level.
+
+More details are available in [docs/configuration.md](docs/configuration.md) and
+[docs/fault-injection.md](docs/fault-injection.md).
+
+### Tests
+
+The tests use Qt Test and connect only to the local loopback address. They do not
+need a real device or an Internet connection.
+
+```shell
+ctest --test-dir build --output-on-failure
+```
+
+### Safety note
+
+The default listen address is `127.0.0.1`. Using `0.0.0.0` makes the simulator
+reachable by other machines on the same network, so use that setting only on a
+network you trust.
+
+Do not put private protocols, keys, production addresses, or customer data in a
+public configuration file.
+
+### License
+
+MIT License. See [LICENSE](LICENSE).
