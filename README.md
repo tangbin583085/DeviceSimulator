@@ -105,7 +105,7 @@ CRC 从 Version 开始计算到 Payload 最后一个字节，不包含 Header �
 ctest --test-dir build --output-on-failure
 ```
 
-GitHub Actions 会执行 Release 构建和全部测试。
+项目可以在具备 Qt 和 CMake 的环境中运行完整构建和测试。
 
 ## 安全提醒
 

@@ -626,7 +626,8 @@ bool DeviceSimulatorServer::queueResponse(
 
 bool DeviceSimulatorServer::enqueueTransmission(OutboundTransmission transmission)
 {
-    if (m_outputQueue.size() >= OutputQueueCapacity) {
+    const qsizetype activeWriteCount = m_writing ? 1 : 0;
+    if (m_outputQueue.size() + activeWriteCount >= OutputQueueCapacity) {
         const QString message = QStringLiteral("Session output queue reached its limit.");
         emit networkError(message);
         emitEvent(QStringLiteral("NetworkError"), message);
